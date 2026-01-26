@@ -9,6 +9,8 @@ body {
     background: #0b0014;
     color: #ffffff;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .glitch-screen {
@@ -98,6 +100,11 @@ body {
     border-radius: 8px;
     background: rgba(199, 125, 255, 0.15);
     transition: 0.3s;
+    display: inline-block;
+    min-width: 44px;
+    min-height: 44px;
+    text-align: center;
+    line-height: 28px;
 }
 
 .menu a:hover {
@@ -118,6 +125,19 @@ body {
 .content h1 {
     font-size: 36px;
     color: #e0aaff;
+    word-wrap: break-word;
+    padding: 0 20px;
+}
+
+.content h2 {
+    word-wrap: break-word;
+    padding: 0 20px;
+}
+
+.content p {
+    word-wrap: break-word;
+    padding: 0 20px;
+    max-width: 90%;
 }
 
 .hidden {
@@ -125,24 +145,70 @@ body {
 }
 
 @media (max-width: 600px) {
+    body {
+        overflow-x: hidden;
+    }
+
     .glitch {
-        font-size: 40px;
+        font-size: 32px;
     }
 
     .glitch-logo {
-        width: 90px;
+        width: 80px;
     }
 
     .top-bar {
         flex-direction: column;
         gap: 10px;
+        padding: 12px 15px;
+    }
+
+    .logo-area img {
+        max-width: 120px;
+        height: auto;
+    }
+
+    .menu {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .menu a {
+        margin-left: 0;
+        padding: 6px 12px;
+        font-size: 14px;
+        min-width: auto;
+        min-height: 36px;
+        line-height: 24px;
+    }
+
+    .content {
+        height: calc(100vh - 100px);
+        padding: 20px 10px;
+    }
+
+    .content h1 {
+        font-size: 28px;
+        margin-top: 10px;
+    }
+
+    .content h2 {
+        font-size: 24px;
+    }
+
+    .content p {
+        font-size: 16px;
+        line-height: 1.5;
     }
 }
 /* -------- SLIDER -------- */
 .slider-container{
     position: fixed;
     left: 20px;
-    bottom: 20px;
+    bottom: 90px;
     width: 260px;
     height: 60px;
     display: flex;
@@ -157,36 +223,252 @@ body {
     align-items:center;
     text-decoration:none;
     color:#fff;
-    border: 1px solid #fff;
+    border: 2px solid #c77dff;
     border-radius: 12px;
     font-weight: bold;
-    transition: transform 0.3s, background 0.3s;
-    background: rgba(199, 125, 255, 0.18);
+    transition: all 0.3s;
+    background: rgba(199, 125, 255, 0.15);
 }
 
 .slider-item:hover{
-    transform: translateY(-3px);
-    background: rgba(199, 125, 255, 0.35);
-}
-
-.slider-item.left{
-    background: rgba(0, 255, 255, 0.12);
-}
-
-.slider-item.right{
-    background: rgba(255, 0, 255, 0.12);
+    background: #c77dff;
+    color: #0b0014;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(199, 125, 255, 0.5);
 }
 
 @media (max-width: 600px){
     .slider-container{
-        width: 90%;
-        left: 5%;
-        bottom: 15px;
-        height: 55px;
+        width: calc(100% - 30px);
+        left: 15px;
+        bottom: 80px;
+        height: 50px;
+        gap: 8px;
     }
 
     .slider-item{
         font-size: 14px;
         border-radius: 10px;
+        padding: 0 10px;
+        min-height: 44px;
+    }
+}
+
+/* -------- PROJECT BUTTONS -------- */
+.button-container {
+    display: flex;
+    gap: 30px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+}
+
+.project-button {
+    padding: 20px 50px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    text-decoration: none;
+    border: 2px solid #c77dff;
+    border-radius: 12px;
+    background: rgba(199, 125, 255, 0.15);
+    transition: all 0.3s;
+    display: inline-block;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+button.project-button {
+    text-decoration: none;
+}
+
+.project-button:hover {
+    background: #c77dff;
+    color: #0b0014;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(199, 125, 255, 0.5);
+}
+
+.project-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: rgba(199, 125, 255, 0.5);
+}
+
+.project-button:disabled:hover {
+    background: rgba(199, 125, 255, 0.15);
+    color: #ffffff;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 600px) {
+    .button-container {
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 30px;
+        width: 100%;
+        padding: 0 20px;
+    }
+    
+    .project-button {
+        padding: 16px 30px;
+        font-size: 18px;
+        width: 100%;
+        max-width: 300px;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* -------- BACK BUTTON -------- */
+.back-button {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    text-decoration: none;
+    border: 2px solid #c77dff;
+    border-radius: 8px;
+    background: rgba(199, 125, 255, 0.15);
+    transition: all 0.3s;
+    z-index: 1001;
+}
+
+.back-button:hover {
+    background: #c77dff;
+    color: #0b0014;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(199, 125, 255, 0.5);
+}
+
+@media (max-width: 600px) {
+    .back-button {
+        left: 15px;
+        bottom: 15px;
+        padding: 12px 20px;
+        font-size: 16px;
+        min-width: 80px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Küçük mobil cihazlar için ekstra optimizasyon */
+@media (max-width: 400px) {
+    .glitch {
+        font-size: 28px;
+    }
+
+    .glitch-logo {
+        width: 70px;
+    }
+
+    .content h1 {
+        font-size: 24px;
+    }
+
+    .content h2 {
+        font-size: 20px;
+    }
+
+    .project-button {
+        padding: 14px 25px;
+        font-size: 16px;
+    }
+
+    .back-button {
+        padding: 10px 16px;
+        font-size: 14px;
+        min-width: 70px;
+    }
+
+    .slider-container {
+        height: 45px;
+    }
+
+    .slider-item {
+        font-size: 12px;
+    }
+}
+
+/* Tablet uyumluluk */
+@media (min-width: 601px) and (max-width: 1024px) {
+    .glitch {
+        font-size: 48px;
+    }
+
+    .glitch-logo {
+        width: 100px;
+    }
+
+    .content h1 {
+        font-size: 32px;
+    }
+
+    .project-button {
+        padding: 18px 40px;
+        font-size: 22px;
+    }
+
+    .button-container {
+        gap: 25px;
+    }
+}
+
+/* Yatay mod (landscape) için optimizasyon */
+@media (max-width: 900px) and (orientation: landscape) {
+    .glitch-screen {
+        gap: 15px;
+    }
+
+    .glitch {
+        font-size: 36px;
+    }
+
+    .glitch-logo {
+        width: 80px;
+    }
+
+    .content {
+        height: calc(100vh - 80px);
+        padding: 10px;
+    }
+
+    .content h1 {
+        font-size: 24px;
+        margin-top: 5px;
+    }
+
+    .content h2 {
+        font-size: 20px;
+        margin-top: -50px;
+    }
+
+    .button-container {
+        margin-top: 20px;
+        gap: 15px;
+    }
+
+    .project-button {
+        padding: 12px 25px;
+        font-size: 16px;
+    }
+
+    .slider-container {
+        bottom: 70px;
+        height: 45px;
+    }
+
+    .back-button {
+        bottom: 10px;
+        left: 10px;
     }
 }
