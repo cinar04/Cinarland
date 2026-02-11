@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>UNO Pro - Çınar Edition</title>
+<style>
+body{
+    margin:0;
+    background:#0f172a;
+    font-family:Arial;
+    color:white;
+    text-align:center;
+}
+#startScreen{
+    position:fixed;
+    inset:0;
+    background:#0f172a;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+input{
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    margin:10px;
+    font-size:16px;
+}
+button{
+    padding:12px 20px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+.card{
+    display:inline-block;
+    width:70px;
+    height:100px;
+    line-height:100px;
+    margin:6px;
+    border-radius:12px;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:22px;
+}
+.red{background:#e63946;}
+.green{background:#2a9d8f;}
+.blue{background:#457b9d;}
+.yellow{background:#f4a261;color:black;}
+.black{background:black;}
+#game{display:none;}
+.section{margin:15px;}
+#colorPicker{
+    display:none;
+}
+</style>
+</head>
+<body>
+
+<div id="startScreen">
+    <h1>UNO Pro</h1>
+    <input id="username" placeholder="Kullanıcı Adın">
+    <button onclick="startGame()">Başla</button>
+</div>
+
+<div id="game">
+    <h2 id="playerTitle"></h2>
+
+    <div class="section">
+        <h3>Ortadaki Kart</h3>
+        <div id="pile"></div>
+    </div>
+
+    <div class="section">
+        <h3>Bilgisayar</h3>
+        <div id="computerInfo"></div>
+    </div>
+
+    <div class="section">
+        <h3>Elin</h3>
+        <div id="player"></div>
+    </div>
+
+    <button onclick="drawCard()">Kart Çek</button>
+
+    <div id="colorPicker">
+        <h3>Renk Seç</h3>
+        <button onclick="chooseColor('red')">Kırmızı</button>
+        <button onclick="chooseColor('green')">Yeşil</button>
+        <button onclick="chooseColor('blue')">Mavi</button>
+        <button onclick="chooseColor('yellow')">Sarı</button>
+    </div>
+
+    <div id="message"></div>
+</div>
+
+<script>
+const colors=["red","green","blue","yellow"];
+const specials=["+2","skip","reverse"];
+let deck=[];
+let player=[];
+let computer=[];
+let currentCard=null;
+let playerTurn=true;
+let playerName="";
+
+function createDeck(){
+    deck=[];
+    colors.forEach(color=>{
+        for(let i=0;i<=9;i++){
+            deck.push({color,value:i});
+        }
+        specials.forEach(s=>{
+            deck.push({color,value:s});
+        });
+    });
+    for(let i=0;i<4;i++){
+        deck.push({color:"black",value:"wild"});
+    }
+    deck.sort(()=>Math.random()-0.5);
+}
+
+function deal(){
+    player=[];
+    computer=[];
+    for(let i=0;i<7;i++){
+        player.push(deck.pop());
+        computer.push(deck.pop());
+    }
+}
+
+function startGame(){
+    const name=document.getElementById("username").value.trim();
+    if(name==="") return;
+    playerName=name;
+    document.getElementById("playerTitle").innerText=name;
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("game").style.display="block";
+    createDeck();
+    deal();
+    currentCard=deck.pop();
+    render();
+}
+
+function render(){
+    document.getElementById("pile").innerHTML=
+        `<div class="card ${currentCard.color}">${currentCard.value}</div>`;
+    document.getElementById("player").innerHTML="";
+    player.forEach((card,index)=>{
+        const div=document.createElement("div");
+        div.className=`card ${card.color}`;
+        div.innerText=card.value;
+        div.onclick=()=>playCard(index);
+        document.getElementById("player").appendChild(div);
+    });
+    document.getElementById("computerInfo").innerText=
+        "Kart Sayısı: "+computer.length;
+}
+
+function playCard(index){
+    if(!playerTurn) return;
+    const card=player[index];
+    if(validMove(card)){
+        player.splice(index,1);
+        applyCard(card,"player");
+        checkWin();
+    }else{
+        showMessage("Bu kartı oynayamazsın!");
+    }
+}
+
+function validMove(card){
+    return card.color===currentCard.color ||
+           card.value===currentCard.value ||
+           card.color==="black";
+}
+
+function applyCard(card,who){
+    if(card.value==="wild"){
+        currentCard=card;
+        if(who==="player"){
+            document.getElementById("colorPicker").style.display="block";
+        }else{
+            const randomColor=colors[Math.floor(Math.random()*4)];
+            currentCard.color=randomColor;
+            endTurn();
+        }
+        return;
+    }
+    currentCard=card;
+    if(card.value==="+2"){
+        if(who==="player"){
+            computer.push(deck.pop());
+            computer.push(deck.pop());
+        }else{
+            player.push(deck.pop());
+            player.push(deck.pop());
+        }
+    }
+    if(card.value==="skip"){
+        endTurn();
+    }
+    endTurn();
+}
+
+function chooseColor(color){
+    currentCard.color=color;
+    document.getElementById("colorPicker").style.display="none";
+    endTurn();
+}
+
+function endTurn(){
+    playerTurn=!playerTurn;
+    render();
+    if(!playerTurn){
+        setTimeout(computerPlay,1000);
+    }
+}
+
+function computerPlay(){
+    for(let i=0;i<computer.length;i++){
+        if(validMove(computer[i])){
+            const card=computer.splice(i,1)[0];
+            applyCard(card,"computer");
+            checkWin();
+            return;
+        }
+    }
+    computer.push(deck.pop());
+    playerTurn=true;
+    render();
+}
+
+function drawCard(){
+    if(!playerTurn) return;
+    player.push(deck.pop());
+    render();
+}
+
+function checkWin(){
+    if(player.length===0){
+        alert(playerName+" kazandı 🔥");
+        location.reload();
+    }
+    if(computer.length===0){
+        alert("Bilgisayar kazandı 🤖");
+        location.reload();
+    }
+}
+
+function showMessage(msg){
+    document.getElementById("message").innerText=msg;
+}
+</script>
+
+</body>
+</html>
