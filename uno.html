@@ -2,17 +2,17 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>UNO Mobile - Pro</title>
+<title>UNO Cinarland Edition</title>
 <style>
 body{
 margin:0;
+font-family:Arial, sans-serif;
 background:radial-gradient(circle at center,#1e293b,#0f172a);
-font-family:Arial;
+overflow:hidden;
 color:white;
 text-align:center;
-overflow:hidden;
 }
-#start{
+#startScreen,#endScreen{
 position:fixed;
 inset:0;
 display:flex;
@@ -22,136 +22,123 @@ align-items:center;
 background:#0f172a;
 z-index:10;
 }
+#game{
+display:none;
+height:100vh;
+position:relative;
+}
 input{
 padding:12px;
-border:none;
 border-radius:10px;
+border:none;
 font-size:16px;
 }
 button{
-padding:12px 20px;
-border:none;
+padding:12px 25px;
 border-radius:10px;
+border:none;
 cursor:pointer;
 font-weight:bold;
+margin-top:15px;
 }
-#game{
-display:none;
-padding-top:20px;
+.unoLogo{
+width:300px;
+transform:rotate(-15deg);
+filter:drop-shadow(0 15px 25px rgba(0,0,0,.6));
 }
 .card{
-width:70px;
-height:100px;
-border-radius:15px;
-display:inline-flex;
+width:100px;
+height:150px;
+border-radius:20px;
+display:flex;
 align-items:center;
 justify-content:center;
-margin:6px;
+font-size:40px;
 font-weight:bold;
-font-size:22px;
+position:absolute;
+transition:all .4s ease;
+box-shadow:0 15px 25px rgba(0,0,0,.5);
 cursor:pointer;
-transition:transform .3s,box-shadow .3s;
-animation:fadeIn .4s ease;
-}
-.card:hover{
-transform:translateY(-10px) scale(1.1);
-box-shadow:0 0 20px white;
 }
 .red{background:#e63946;}
 .green{background:#2a9d8f;}
 .blue{background:#457b9d;}
 .yellow{background:#f4a261;color:black;}
-.black{background:black;}
-#pile .card{
-animation:drop .4s ease;
+#pile{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
 }
-@keyframes drop{
-0%{transform:scale(2) rotate(20deg);opacity:0;}
-100%{transform:scale(1);opacity:1;}
+#playerHand{
+position:absolute;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+height:180px;
 }
-@keyframes fadeIn{
-0%{opacity:0;transform:translateY(20px);}
-100%{opacity:1;transform:translateY(0);}
+#computerInfo{
+position:absolute;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+font-size:18px;
 }
-#playerArea{
-position:fixed;
-bottom:10px;
-width:100%;
+.card:hover{
+transform:translateY(-20px) scale(1.1);
 }
-#computerArea{
-position:fixed;
-top:10px;
-width:100%;
+.win{
+font-size:50px;
+animation:pop 1s ease infinite alternate;
 }
-#colorPicker{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.8);
-justify-content:center;
-align-items:center;
-gap:20px;
+@keyframes pop{
+from{transform:scale(1);}
+to{transform:scale(1.1);}
 }
-.colorBtn{
-width:80px;
-height:80px;
-border-radius:50%;
-cursor:pointer;
+.confetti{
+position:absolute;
+width:10px;
+height:10px;
+animation:fall linear forwards;
 }
-.glow{
-animation:glow 1s infinite alternate;
-}
-@keyframes glow{
-0%{box-shadow:0 0 10px white;}
-100%{box-shadow:0 0 30px white;}
+@keyframes fall{
+0%{transform:translateY(-10px) rotate(0);}
+100%{transform:translateY(100vh) rotate(720deg);}
 }
 </style>
 </head>
 <body>
 
-<div id="start">
-<h1>UNO Mobile</h1>
-<input id="name" placeholder="Kullanıcı Adın">
-<br><br>
-<button onclick="start()">Başla</button>
+<div id="startScreen">
+<svg class="unoLogo" viewBox="0 0 400 200">
+<ellipse cx="200" cy="100" rx="180" ry="80" fill="#d00000"/>
+<text x="200" y="125" font-size="100" text-anchor="middle" fill="white" font-weight="bold" transform="rotate(-10 200 100)">UNO</text>
+</svg>
+<h2>Cinarland Edition</h2>
+<input id="username" placeholder="Kullanıcı Adın">
+<button onclick="startGame()">Başla</button>
 </div>
 
 <div id="game">
-<h2 id="title"></h2>
-
-<div id="computerArea">
-Bilgisayar: <span id="compCount"></span> kart
-</div>
-
+<div id="computerInfo"></div>
 <div id="pile"></div>
-
-<div id="playerArea">
-<div id="player"></div>
-<br>
-<button onclick="draw()">Kart Çek</button>
+<div id="playerHand"></div>
 </div>
 
-<div id="colorPicker">
-<div class="colorBtn red" onclick="choose('red')"></div>
-<div class="colorBtn green" onclick="choose('green')"></div>
-<div class="colorBtn blue" onclick="choose('blue')"></div>
-<div class="colorBtn yellow" onclick="choose('yellow')"></div>
-</div>
-
+<div id="endScreen" style="display:none;">
+<div id="endTitle" class="win"></div>
+<button onclick="restart()">Yeniden Başlat</button>
 </div>
 
 <script>
 const colors=["red","green","blue","yellow"];
-const specials=["+2","skip","reverse"];
 let deck=[],player=[],computer=[],current=null,turn=true,name="";
 
 function createDeck(){
 deck=[];
 colors.forEach(c=>{
 for(let i=0;i<=9;i++)deck.push({color:c,value:i});
-specials.forEach(s=>deck.push({color:c,value:s}));
 });
-for(let i=0;i<4;i++)deck.push({color:"black",value:"wild"});
 deck.sort(()=>Math.random()-0.5);
 }
 
@@ -163,11 +150,10 @@ computer.push(deck.pop());
 }
 }
 
-function start(){
-name=document.getElementById("name").value.trim();
+function startGame(){
+name=document.getElementById("username").value.trim();
 if(!name)return;
-document.getElementById("title").innerText=name;
-document.getElementById("start").style.display="none";
+document.getElementById("startScreen").style.display="none";
 document.getElementById("game").style.display="block";
 createDeck();
 deal();
@@ -177,23 +163,26 @@ render();
 
 function render(){
 document.getElementById("pile").innerHTML=
-`<div class="card ${current.color} glow">${current.value}</div>`;
-document.getElementById("compCount").innerText=computer.length;
-let p=document.getElementById("player");
-p.innerHTML="";
+`<div class="card ${current.color}" style="position:relative">${current.value}</div>`;
+document.getElementById("computerInfo").innerText=
+"Bilgisayar Kart: "+computer.length;
+
+let hand=document.getElementById("playerHand");
+hand.innerHTML="";
+let spread=120;
 player.forEach((card,i)=>{
-let d=document.createElement("div");
-d.className=`card ${card.color}`;
-d.innerText=card.value;
-d.onclick=()=>play(i);
-p.appendChild(d);
+let div=document.createElement("div");
+div.className="card "+card.color;
+div.innerText=card.value;
+div.style.left=(i*spread/player.length)+"px";
+div.onclick=()=>play(i);
+hand.appendChild(div);
 });
 }
 
 function valid(card){
 return card.color===current.color||
-card.value===current.value||
-card.color==="black";
+card.value===current.value;
 }
 
 function play(i){
@@ -201,47 +190,19 @@ if(!turn)return;
 let card=player[i];
 if(!valid(card))return;
 player.splice(i,1);
-apply(card,"player");
-check();
-}
-
-function apply(card,who){
-if(card.value==="wild"){
 current=card;
-if(who==="player"){
-document.getElementById("colorPicker").style.display="flex";
-return;
-}else{
-current.color=colors[Math.floor(Math.random()*4)];
-}
-}else{
-current=card;
-}
-if(card.value==="+2"){
-let target=who==="player"?computer:player;
-target.push(deck.pop());
-target.push(deck.pop());
-}
-end();
-}
-
-function choose(c){
-current.color=c;
-document.getElementById("colorPicker").style.display="none";
-end();
-}
-
-function end(){
-turn=!turn;
+turn=false;
 render();
-if(!turn)setTimeout(bot,800);
+check();
+setTimeout(bot,800);
 }
 
 function bot(){
 for(let i=0;i<computer.length;i++){
 if(valid(computer[i])){
-let card=computer.splice(i,1)[0];
-apply(card,"computer");
+current=computer.splice(i,1)[0];
+turn=true;
+render();
 check();
 return;
 }
@@ -251,21 +212,33 @@ turn=true;
 render();
 }
 
-function draw(){
-if(!turn)return;
-player.push(deck.pop());
-render();
+function check(){
+if(player.length===0)showEnd(true);
+if(computer.length===0)showEnd(false);
 }
 
-function check(){
-if(player.length===0){
-alert(name+" kazandı 🔥");
-location.reload();
+function showEnd(win){
+document.getElementById("game").style.display="none";
+document.getElementById("endScreen").style.display="flex";
+document.getElementById("endTitle").innerText=
+win?name+" KAZANDI! 🎉":"Bilgisayar Kazandı 😢";
+if(win)confetti();
 }
-if(computer.length===0){
-alert("Bilgisayar kazandı 🤖");
-location.reload();
+
+function confetti(){
+for(let i=0;i<120;i++){
+let c=document.createElement("div");
+c.className="confetti";
+c.style.left=Math.random()*100+"vw";
+c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+c.style.animationDuration=(2+Math.random()*2)+"s";
+document.body.appendChild(c);
+setTimeout(()=>c.remove(),4000);
 }
+}
+
+function restart(){
+location.reload();
 }
 </script>
 
