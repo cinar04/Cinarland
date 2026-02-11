@@ -44,11 +44,10 @@ margin-top:15px;
 .unoLogo{
 width:300px;
 transform:rotate(-15deg);
-filter:drop-shadow(0 15px 25px rgba(0,0,0,.6));
 }
 #pile{
 position:absolute;
-top:50%;
+top:45%;
 left:50%;
 transform:translate(-50%,-50%);
 }
@@ -59,11 +58,12 @@ border-radius:20px;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:36px;
+font-size:28px;
 font-weight:bold;
 box-shadow:0 15px 25px rgba(0,0,0,.5);
 cursor:pointer;
 transition:transform .3s;
+color:white;
 }
 .card:hover{
 transform:translateY(-20px) scale(1.1);
@@ -72,19 +72,42 @@ transform:translateY(-20px) scale(1.1);
 .green{background:#2a9d8f;}
 .blue{background:#457b9d;}
 .yellow{background:#f4a261;color:black;}
+.black{background:black;}
 #playerHand{
 position:absolute;
 bottom:20px;
 width:100%;
 display:flex;
 justify-content:center;
-gap:10px;
+gap:8px;
 flex-wrap:nowrap;
 }
 #computerInfo{
 position:absolute;
 top:20px;
 width:100%;
+}
+#drawBtn{
+position:absolute;
+top:60%;
+left:50%;
+transform:translateX(-50%);
+}
+#colorPicker{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.8);
+justify-content:center;
+align-items:center;
+gap:20px;
+z-index:20;
+}
+.colorBtn{
+width:80px;
+height:80px;
+border-radius:50%;
+cursor:pointer;
 }
 .win{
 font-size:50px;
@@ -104,6 +127,12 @@ animation:fall linear forwards;
 0%{transform:translateY(-10px) rotate(0);}
 100%{transform:translateY(100vh) rotate(720deg);}
 }
+#message{
+position:absolute;
+top:55%;
+width:100%;
+font-size:20px;
+}
 </style>
 </head>
 <body>
@@ -121,7 +150,16 @@ animation:fall linear forwards;
 <div id="game">
 <div id="computerInfo"></div>
 <div id="pile"></div>
+<div id="message"></div>
+<button id="drawBtn" onclick="draw()">Kart Çek</button>
 <div id="playerHand"></div>
+</div>
+
+<div id="colorPicker">
+<div class="colorBtn red" onclick="chooseColor('red')"></div>
+<div class="colorBtn green" onclick="chooseColor('green')"></div>
+<div class="colorBtn blue" onclick="chooseColor('blue')"></div>
+<div class="colorBtn yellow" onclick="chooseColor('yellow')"></div>
 </div>
 
 <div id="endScreen" style="display:none;">
@@ -131,13 +169,16 @@ animation:fall linear forwards;
 
 <script>
 const colors=["red","green","blue","yellow"];
+const specials=["+2","skip","reverse"];
 let deck=[],player=[],computer=[],current=null,turn=true,name="";
 
 function createDeck(){
 deck=[];
 colors.forEach(c=>{
 for(let i=0;i<=9;i++)deck.push({color:c,value:i});
+specials.forEach(s=>deck.push({color:c,value:s}));
 });
+for(let i=0;i<4;i++)deck.push({color:"black",value:"wild"});
 deck.sort(()=>Math.random()-0.5);
 }
 
@@ -179,7 +220,8 @@ hand.appendChild(div);
 
 function valid(card){
 return card.color===current.color||
-card.value===current.value;
+card.value===current.value||
+card.color==="black";
 }
 
 function play(i){
@@ -187,25 +229,63 @@ if(!turn)return;
 let card=player[i];
 if(!valid(card))return;
 player.splice(i,1);
+applyCard(card,"player");
+check();
+}
+
+function applyCard(card,who){
 current=card;
+showMessage(who==="player"?name+" oynadı: "+card.value:"Bilgisayar oynadı: "+card.value);
+
+if(card.value==="+2"){
+let target=who==="player"?computer:player;
+target.push(deck.pop());
+target.push(deck.pop());
+}
+if(card.value==="skip"){
+turn=!turn;
+}
+if(card.value==="reverse"){
+turn=!turn;
+}
+if(card.value==="wild"){
+if(who==="player"){
+document.getElementById("colorPicker").style.display="flex";
+return;
+}else{
+current.color=colors[Math.floor(Math.random()*4)];
+}
+}
+turn=!turn;
+render();
+if(!turn)setTimeout(bot,800);
+}
+
+function chooseColor(color){
+current.color=color;
+document.getElementById("colorPicker").style.display="none";
 turn=false;
 render();
-check();
 setTimeout(bot,800);
 }
 
 function bot(){
 for(let i=0;i<computer.length;i++){
 if(valid(computer[i])){
-current=computer.splice(i,1)[0];
-turn=true;
-render();
+let card=computer.splice(i,1)[0];
+applyCard(card,"computer");
 check();
 return;
 }
 }
 computer.push(deck.pop());
 turn=true;
+render();
+}
+
+function draw(){
+if(!turn)return;
+player.push(deck.pop());
 render();
 }
 
@@ -237,8 +317,11 @@ setTimeout(()=>c.remove(),4000);
 function restart(){
 location.reload();
 }
+
+function showMessage(msg){
+document.getElementById("message").innerText=msg;
+}
 </script>
 
 </body>
 </html>
-
