@@ -8,9 +8,9 @@ body{
 margin:0;
 font-family:Arial, sans-serif;
 background:radial-gradient(circle at center,#1e293b,#0f172a);
-overflow:hidden;
 color:white;
 text-align:center;
+overflow:hidden;
 }
 #startScreen,#endScreen{
 position:fixed;
@@ -46,46 +46,45 @@ width:300px;
 transform:rotate(-15deg);
 filter:drop-shadow(0 15px 25px rgba(0,0,0,.6));
 }
-.card{
-width:100px;
-height:150px;
-border-radius:20px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:40px;
-font-weight:bold;
-position:absolute;
-transition:all .4s ease;
-box-shadow:0 15px 25px rgba(0,0,0,.5);
-cursor:pointer;
-}
-.red{background:#e63946;}
-.green{background:#2a9d8f;}
-.blue{background:#457b9d;}
-.yellow{background:#f4a261;color:black;}
 #pile{
 position:absolute;
 top:50%;
 left:50%;
 transform:translate(-50%,-50%);
 }
+.card{
+width:90px;
+height:140px;
+border-radius:20px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:36px;
+font-weight:bold;
+box-shadow:0 15px 25px rgba(0,0,0,.5);
+cursor:pointer;
+transition:transform .3s;
+}
+.card:hover{
+transform:translateY(-20px) scale(1.1);
+}
+.red{background:#e63946;}
+.green{background:#2a9d8f;}
+.blue{background:#457b9d;}
+.yellow{background:#f4a261;color:black;}
 #playerHand{
 position:absolute;
 bottom:20px;
-left:50%;
-transform:translateX(-50%);
-height:180px;
+width:100%;
+display:flex;
+justify-content:center;
+gap:10px;
+flex-wrap:nowrap;
 }
 #computerInfo{
 position:absolute;
 top:20px;
-left:50%;
-transform:translateX(-50%);
-font-size:18px;
-}
-.card:hover{
-transform:translateY(-20px) scale(1.1);
+width:100%;
 }
 .win{
 font-size:50px;
@@ -163,18 +162,16 @@ render();
 
 function render(){
 document.getElementById("pile").innerHTML=
-`<div class="card ${current.color}" style="position:relative">${current.value}</div>`;
+`<div class="card ${current.color}">${current.value}</div>`;
 document.getElementById("computerInfo").innerText=
 "Bilgisayar Kart: "+computer.length;
 
 let hand=document.getElementById("playerHand");
 hand.innerHTML="";
-let spread=120;
 player.forEach((card,i)=>{
 let div=document.createElement("div");
 div.className="card "+card.color;
 div.innerText=card.value;
-div.style.left=(i*spread/player.length)+"px";
 div.onclick=()=>play(i);
 hand.appendChild(div);
 });
