@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>UNO Cinarland Edition</title>
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:radial-gradient(circle,#1e293b,#0f172a);
+color:white;
+text-align:center;
+overflow:hidden;
+}
+
+/* GİZLİ BUTON */
+#devBtn{
+position:fixed;
+top:5px;
+left:5px;
+width:40px;
+height:40px;
+opacity:0.05;
+z-index:100;
+cursor:pointer;
+}
+
+/* DEV PANEL */
+#devPanel{
+position:fixed;
+right:-300px;
+top:0;
+width:280px;
+height:100vh;
+background:#111827;
+padding:20px;
+transition:.5s;
+z-index:90;
+box-shadow:-5px 0 20px rgba(0,0,0,.7);
+}
+#devPanel.open{right:0;}
+
+#devPanel button{
+width:100%;
+margin:8px 0;
+padding:8px;
+border-radius:8px;
+border:none;
+cursor:pointer;
+font-weight:bold;
+}
+
+#startScreen,#endScreen{
+position:fixed;
+inset:0;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:#0f172a;
+z-index:20;
+}
+
+#game{display:none;height:100vh;position:relative;}
+
+.card{
+width:90px;height:140px;border-radius:20px;
+display:flex;align-items:center;justify-content:center;
+font-size:26px;font-weight:bold;
+box-shadow:0 10px 20px rgba(0,0,0,.5);
+cursor:pointer;transition:.3s;color:white;
+}
+.card:hover{transform:translateY(-20px) scale(1.1);}
+
+.red{background:#e63946;}
+.green{background:#2a9d8f;}
+.blue{background:#457b9d;}
+.yellow{background:#f4a261;color:black;}
+.black{background:black;}
+
+#playerHand{
+position:absolute;bottom:20px;width:100%;
+display:flex;justify-content:center;gap:8px;
+}
+
+#computerInfo{position:absolute;top:20px;width:100%;}
+#pile{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);}
+#drawBtn{position:absolute;top:60%;left:50%;transform:translateX(-50%);}
+
+button{
+padding:10px 20px;
+border-radius:10px;
+border:none;
+cursor:pointer;
+margin-top:15px;
+font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div id="devBtn" onclick="openDev()"></div>
+
+<div id="devPanel">
+<h3>⚙ Developer Panel</h3>
+<button onclick="setBotCards()">Bot Kart Ayarla</button>
+<button onclick="givePlus4()">+4 Kart Al</button>
+<button onclick="forceWin()">Direkt Kazan</button>
+<button onclick="forceLose()">Direkt Kaybet</button>
+<button onclick="location.reload()">Yeniden Başlat</button>
+<button onclick="closeGame()">Oyunu Kapat</button>
+</div>
+
+<div id="startScreen">
+<h1>UNO Cinarland Edition</h1>
+<input id="username" placeholder="Kullanıcı Adın">
+<button onclick="startGame()">Başla</button>
+</div>
+
+<div id="game">
+<div id="computerInfo"></div>
+<div id="pile"></div>
+<button id="drawBtn" onclick="draw()">Kart Çek</button>
+<div id="playerHand"></div>
+</div>
+
+<div id="endScreen" style="display:none;">
+<h1 id="endTitle"></h1>
+<button onclick="location.reload()">Devam</button>
+</div>
+
+<script>
+const colors=["red","green","blue","yellow"];
+let deck=[],player=[],computer=[],current=null;
+let turn=true,name="";
+
+function createDeck(){
+deck=[];
+colors.forEach(c=>{
+for(let i=0;i<=9;i++)deck.push({color:c,value:i});
+});
+for(let i=0;i<4;i++)deck.push({color:"black",value:"+4"});
+deck.sort(()=>Math.random()-0.5);
+}
+
+function safeDraw(){
+if(deck.length===0)createDeck();
+return deck.pop();
+}
+
+function startGame(){
+name=document.getElementById("username").value.trim();
+if(!name)return;
+document.getElementById("startScreen").style.display="none";
+document.getElementById("game").style.display="block";
+createDeck();
+player=[];computer=[];
+for(let i=0;i<7;i++){
+player.push(safeDraw());
+computer.push(safeDraw());
+}
+current=safeDraw();
+render();
+}
+
+function render(){
+document.getElementById("pile").innerHTML=
+`<div class="card ${current.color}">${current.value}</div>`;
+document.getElementById("computerInfo").innerText=
+"Bilgisayar Kart: "+computer.length;
+
+let hand=document.getElementById("playerHand");
+hand.innerHTML="";
+player.forEach((card,i)=>{
+let div=document.createElement("div");
+div.className="card "+card.color;
+div.innerText=card.value;
+div.onclick=()=>play(i);
+hand.appendChild(div);
+});
+}
+
+function valid(card){
+return card.color===current.color||
+card.value===current.value||
+card.color==="black";
+}
+
+function play(i){
+if(!turn)return;
+let card=player[i];
+if(!valid(card))return;
+player.splice(i,1);
+current=card;
+turn=false;
+render();
+setTimeout(bot,800);
+checkWin();
+}
+
+function bot(){
+for(let i=0;i<computer.length;i++){
+if(valid(computer[i])){
+current=computer.splice(i,1)[0];
+render();
+checkWin();
+turn=true;
+return;
+}
+}
+computer.push(safeDraw());
+turn=true;
+render();
+}
+
+function draw(){
+if(!turn)return;
+player.push(safeDraw());
+render();
+}
+
+function checkWin(){
+if(player.length===0){
+showEnd(name+" EZDİ 😎");
+}
+if(computer.length===0){
+showEnd("Bilgisayar Kazandı 💀");
+}
+}
+
+function showEnd(text){
+document.getElementById("game").style.display="none";
+document.getElementById("endTitle").innerText=text;
+document.getElementById("endScreen").style.display="flex";
+}
+
+/* DEV PANEL */
+function openDev(){
+let pass=prompt("Şifre?");
+if(pass==="7784"){
+document.getElementById("devPanel").classList.add("open");
+}else{
+alert("Yanlış şifre");
+}
+}
+
+function setBotCards(){
+let n=prompt("Bot kaç kart olsun?");
+n=parseInt(n);
+if(!isNaN(n)){
+computer=[];
+for(let i=0;i<n;i++)computer.push(safeDraw());
+render();
+}
+}
+
+function givePlus4(){
+for(let i=0;i<4;i++)player.push(safeDraw());
+render();
+}
+
+function forceWin(){
+player=[];
+checkWin();
+}
+
+function forceLose(){
+computer=[];
+checkWin();
+}
+
+function closeGame(){
+document.body.innerHTML="<h1 style='color:white;text-align:center;margin-top:40vh'>Oyun Kapatıldı</h1>";
+}
+</script>
+
+</body>
+</html>
