@@ -46,6 +46,7 @@ cursor:pointer;transition:.3s;color:white;
 #playerHand{
 position:absolute;bottom:20px;width:100%;
 display:flex;justify-content:center;gap:8px;
+flex-wrap:nowrap;
 }
 
 #computerInfo{position:absolute;top:20px;width:100%;}
@@ -59,14 +60,26 @@ background:red;color:white;font-size:22px;
 display:none;
 }
 
-button{
-padding:10px 20px;
-border-radius:10px;
-border:none;
-cursor:pointer;
-margin-top:15px;
-font-weight:bold;
+/* Renk Seçici */
+#colorPicker{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.85);
+justify-content:center;
+align-items:center;
+gap:25px;
+z-index:30;
 }
+
+.colorBtn{
+width:90px;
+height:90px;
+border-radius:50%;
+cursor:pointer;
+transition:.3s;
+}
+.colorBtn:hover{transform:scale(1.2);}
 
 /* KONFETİ */
 .confetti{
@@ -106,6 +119,15 @@ animation:shake .4s;
 80%{transform:translate(8px,-4px);}
 100%{transform:translate(0,0);}
 }
+
+button{
+padding:10px 20px;
+border-radius:10px;
+border:none;
+cursor:pointer;
+margin-top:15px;
+font-weight:bold;
+}
 </style>
 </head>
 <body>
@@ -122,6 +144,13 @@ animation:shake .4s;
 <button id="drawBtn" onclick="draw()">Kart Çek</button>
 <button id="unoBtn" onclick="pressUNO()">UNO!</button>
 <div id="playerHand"></div>
+</div>
+
+<div id="colorPicker">
+<div class="colorBtn red" onclick="chooseColor('red')"></div>
+<div class="colorBtn green" onclick="chooseColor('green')"></div>
+<div class="colorBtn blue" onclick="chooseColor('blue')"></div>
+<div class="colorBtn yellow" onclick="chooseColor('yellow')"></div>
 </div>
 
 <div id="endScreen" style="display:none;">
@@ -166,6 +195,7 @@ name=document.getElementById("username").value.trim();
 if(!name)return;
 document.getElementById("startScreen").style.display="none";
 document.getElementById("game").style.display="block";
+
 createDeck();
 player=[];computer=[];
 for(let i=0;i<7;i++){
@@ -180,6 +210,7 @@ render();
 function render(){
 document.getElementById("pile").innerHTML=
 `<div class="card ${current.color}">${current.value}</div>`;
+
 document.getElementById("computerInfo").innerText=
 "Bilgisayar Kart: "+computer.length;
 
@@ -200,33 +231,50 @@ card.value===current.value||
 card.color==="black";
 }
 
+/* OYUNCU HAMLESİ */
 function play(i){
 if(!turn)return;
 let card=player[i];
 if(!valid(card))return;
+
 player.splice(i,1);
 applyCard(card,"player");
 checkUNO();
 checkWin();
 }
 
+/* KART UYGULA */
 function applyCard(card,who){
 current=card;
 
+/* +2 */
 if(card.value==="+2"){
 let target=who==="player"?computer:player;
 target.push(safeDraw());
 target.push(safeDraw());
 }
 
+/* +4 */
 if(card.value==="+4"){
 let target=who==="player"?computer:player;
 for(let i=0;i<4;i++)target.push(safeDraw());
+
+if(who==="player"){
+document.getElementById("colorPicker").style.display="flex";
+return;
+}else{
 current.color=colors[Math.floor(Math.random()*4)];
 }
+}
 
+/* Wild */
 if(card.value==="wild"){
+if(who==="player"){
+document.getElementById("colorPicker").style.display="flex";
+return;
+}else{
 current.color=colors[Math.floor(Math.random()*4)];
+}
 }
 
 turn=!turn;
@@ -234,6 +282,16 @@ render();
 if(!turn)setTimeout(bot,800);
 }
 
+/* RENK SEÇ */
+function chooseColor(color){
+current.color=color;
+document.getElementById("colorPicker").style.display="none";
+turn=false;
+render();
+setTimeout(bot,800);
+}
+
+/* BOT */
 function bot(){
 for(let i=0;i<computer.length;i++){
 if(valid(computer[i])){
@@ -254,7 +312,7 @@ player.push(safeDraw());
 render();
 }
 
-/* UNO SİSTEMİ */
+/* UNO */
 function checkUNO(){
 if(player.length===1){
 document.getElementById("unoBtn").style.display="block";
