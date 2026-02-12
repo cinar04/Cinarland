@@ -13,7 +13,59 @@ text-align:center;
 overflow:hidden;
 }
 
-/* EKRANLAR */
+/* GİZLİ DEV BUTTON */
+#devBtn{
+position:fixed;
+top:0;
+left:0;
+width:60px;
+height:60px;
+opacity:0;
+z-index:1000;
+cursor:pointer;
+}
+
+/* DEV PANEL */
+#devPanel{
+position:fixed;
+right:-320px;
+top:0;
+width:300px;
+height:100vh;
+background:#111827;
+padding:20px;
+transition:.4s;
+z-index:900;
+box-shadow:-5px 0 25px rgba(0,0,0,.8);
+}
+#devPanel.open{right:0;}
+
+#devHeader{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
+}
+
+#closeDev{
+cursor:pointer;
+font-size:20px;
+padding:5px 10px;
+background:#1f2937;
+border-radius:6px;
+}
+#closeDev:hover{background:#374151;}
+
+#devPanel button{
+width:100%;
+margin:8px 0;
+padding:8px;
+border-radius:8px;
+border:none;
+cursor:pointer;
+font-weight:bold;
+}
+
 #startScreen,#endScreen{
 position:fixed;
 inset:0;
@@ -22,12 +74,11 @@ flex-direction:column;
 justify-content:center;
 align-items:center;
 background:#0f172a;
-z-index:10;
+z-index:200;
 }
 
 #game{display:none;height:100vh;position:relative;}
 
-/* KART */
 .card{
 width:90px;height:140px;border-radius:20px;
 display:flex;align-items:center;justify-content:center;
@@ -46,7 +97,7 @@ cursor:pointer;transition:.3s;color:white;
 #playerHand{
 position:absolute;bottom:20px;width:100%;
 display:flex;justify-content:center;gap:8px;
-flex-wrap:nowrap;
+flex-wrap:wrap;
 }
 
 #computerInfo{position:absolute;top:20px;width:100%;}
@@ -60,7 +111,7 @@ background:red;color:white;font-size:22px;
 display:none;
 }
 
-/* Renk Seçici */
+/* COLOR PICKER */
 #colorPicker{
 display:none;
 position:fixed;
@@ -69,19 +120,15 @@ background:rgba(0,0,0,.85);
 justify-content:center;
 align-items:center;
 gap:25px;
-z-index:30;
+z-index:600;
 }
-
 .colorBtn{
-width:90px;
-height:90px;
-border-radius:50%;
-cursor:pointer;
-transition:.3s;
+width:90px;height:90px;border-radius:50%;
+cursor:pointer;transition:.3s;
 }
 .colorBtn:hover{transform:scale(1.2);}
 
-/* KONFETİ */
+/* CONFETTI */
 .confetti{
 position:absolute;width:10px;height:10px;
 animation:fall linear forwards;
@@ -91,15 +138,24 @@ animation:fall linear forwards;
 100%{transform:translateY(100vh) rotate(720deg);}
 }
 
-/* EKRAN ÇATLAMA */
+/* CRACK */
 #crackOverlay{
 position:fixed;
 inset:0;
 pointer-events:none;
-background-image:url("https://i.imgur.com/7QZ6FQK.png");
-background-size:cover;
 opacity:0;
-z-index:50;
+z-index:800;
+background:
+repeating-linear-gradient(45deg,
+rgba(255,255,255,0.9) 0px,
+rgba(255,255,255,0.9) 2px,
+transparent 2px,
+transparent 40px),
+repeating-linear-gradient(-45deg,
+rgba(255,255,255,0.7) 0px,
+rgba(255,255,255,0.7) 2px,
+transparent 2px,
+transparent 50px);
 }
 
 @keyframes crackAnim{
@@ -108,9 +164,7 @@ z-index:50;
 100%{opacity:1;transform:scale(1);}
 }
 
-.shake{
-animation:shake .4s;
-}
+.shake{animation:shake .4s;}
 @keyframes shake{
 0%{transform:translate(0,0);}
 20%{transform:translate(-10px,5px);}
@@ -131,6 +185,22 @@ font-weight:bold;
 </style>
 </head>
 <body>
+
+<div id="devBtn" onclick="toggleDev()"></div>
+
+<div id="devPanel">
+<div id="devHeader">
+<h3>⚙ Developer Panel</h3>
+<div id="closeDev" onclick="closeDev()">✖</div>
+</div>
+
+<button onclick="setBotCards()">Bot Kart Ayarla</button>
+<button onclick="givePlus4Card()">+4 Kart Ver</button>
+<button onclick="forceWin()">Direkt Kazan</button>
+<button onclick="forceLose()">Direkt Kaybet</button>
+<button onclick="location.reload()">Yeniden Başlat</button>
+<button onclick="closeGame()">Oyunu Kapat</button>
+</div>
 
 <div id="startScreen">
 <h1>UNO Cinarland Edition</h1>
@@ -166,8 +236,8 @@ const specials=["+2","skip","reverse"];
 let deck=[],player=[],computer=[],current=null;
 let turn=true,name="";
 let unoTimer=null,unoPressed=false;
+let devUnlocked=false;
 
-/* DESTE */
 function createDeck(){
 deck=[];
 colors.forEach(c=>{
@@ -182,20 +252,15 @@ deck.sort(()=>Math.random()-0.5);
 }
 
 function safeDraw(){
-if(deck.length===0){
-createDeck();
-deck.sort(()=>Math.random()-0.5);
-}
+if(deck.length===0)createDeck();
 return deck.pop();
 }
 
-/* BAŞLAT */
 function startGame(){
 name=document.getElementById("username").value.trim();
 if(!name)return;
 document.getElementById("startScreen").style.display="none";
 document.getElementById("game").style.display="block";
-
 createDeck();
 player=[];computer=[];
 for(let i=0;i<7;i++){
@@ -206,11 +271,9 @@ current=safeDraw();
 render();
 }
 
-/* ÇİZ */
 function render(){
 document.getElementById("pile").innerHTML=
 `<div class="card ${current.color}">${current.value}</div>`;
-
 document.getElementById("computerInfo").innerText=
 "Bilgisayar Kart: "+computer.length;
 
@@ -231,34 +294,28 @@ card.value===current.value||
 card.color==="black";
 }
 
-/* OYUNCU HAMLESİ */
 function play(i){
 if(!turn)return;
 let card=player[i];
 if(!valid(card))return;
-
 player.splice(i,1);
 applyCard(card,"player");
 checkUNO();
 checkWin();
 }
 
-/* KART UYGULA */
 function applyCard(card,who){
 current=card;
 
-/* +2 */
 if(card.value==="+2"){
 let target=who==="player"?computer:player;
 target.push(safeDraw());
 target.push(safeDraw());
 }
 
-/* +4 */
 if(card.value==="+4"){
 let target=who==="player"?computer:player;
 for(let i=0;i<4;i++)target.push(safeDraw());
-
 if(who==="player"){
 document.getElementById("colorPicker").style.display="flex";
 return;
@@ -267,7 +324,6 @@ current.color=colors[Math.floor(Math.random()*4)];
 }
 }
 
-/* Wild */
 if(card.value==="wild"){
 if(who==="player"){
 document.getElementById("colorPicker").style.display="flex";
@@ -282,7 +338,6 @@ render();
 if(!turn)setTimeout(bot,800);
 }
 
-/* RENK SEÇ */
 function chooseColor(color){
 current.color=color;
 document.getElementById("colorPicker").style.display="none";
@@ -291,7 +346,6 @@ render();
 setTimeout(bot,800);
 }
 
-/* BOT */
 function bot(){
 for(let i=0;i<computer.length;i++){
 if(valid(computer[i])){
@@ -312,7 +366,6 @@ player.push(safeDraw());
 render();
 }
 
-/* UNO */
 function checkUNO(){
 if(player.length===1){
 document.getElementById("unoBtn").style.display="block";
@@ -334,7 +387,6 @@ document.getElementById("unoBtn").style.display="none";
 clearTimeout(unoTimer);
 }
 
-/* KAZANMA */
 function checkWin(){
 if(player.length===0)showEnd(true);
 if(computer.length===0)showEnd(false);
@@ -356,7 +408,6 @@ document.getElementById("game").style.display="none";
 document.getElementById("endScreen").style.display="flex";
 }
 
-/* KONFETİ */
 function confetti(){
 for(let i=0;i<120;i++){
 let c=document.createElement("div");
@@ -367,6 +418,47 @@ c.style.animationDuration=(2+Math.random()*2)+"s";
 document.body.appendChild(c);
 setTimeout(()=>c.remove(),4000);
 }
+}
+
+/* DEV PANEL */
+function toggleDev(){
+if(devUnlocked){
+document.getElementById("devPanel").classList.add("open");
+return;
+}
+let pass=prompt("Şifre?");
+if(pass==="7784"){
+devUnlocked=true;
+document.getElementById("devPanel").classList.add("open");
+}else{
+alert("Yanlış şifre");
+}
+}
+
+function closeDev(){
+document.getElementById("devPanel").classList.remove("open");
+}
+
+function setBotCards(){
+let n=prompt("Bot kaç kart olsun?");
+n=parseInt(n);
+if(!isNaN(n)){
+computer=[];
+for(let i=0;i<n;i++)computer.push(safeDraw());
+render();
+}
+}
+
+function givePlus4Card(){
+player.push({color:"black",value:"+4"});
+render();
+}
+
+function forceWin(){ player=[]; checkWin(); }
+function forceLose(){ computer=[]; checkWin(); }
+
+function closeGame(){
+document.body.innerHTML="<h1 style='color:white;text-align:center;margin-top:40vh'>Oyun Kapatıldı</h1>";
 }
 </script>
 
