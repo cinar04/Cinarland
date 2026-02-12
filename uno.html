@@ -6,12 +6,14 @@
 <style>
 body{
 margin:0;
-font-family:Arial, sans-serif;
-background:radial-gradient(circle at center,#1e293b,#0f172a);
+font-family:Arial;
+background:radial-gradient(circle,#1e293b,#0f172a);
 color:white;
 text-align:center;
 overflow:hidden;
 }
+
+/* EKRANLAR */
 #startScreen,#endScreen{
 position:fixed;
 inset:0;
@@ -22,127 +24,94 @@ align-items:center;
 background:#0f172a;
 z-index:10;
 }
-#game{
-display:none;
-height:100vh;
-position:relative;
-}
-input{
-padding:12px;
-border-radius:10px;
-border:none;
-font-size:16px;
-}
-button{
-padding:12px 25px;
-border-radius:10px;
-border:none;
-cursor:pointer;
-font-weight:bold;
-margin-top:15px;
-}
-.unoLogo{
-width:300px;
-transform:rotate(-15deg);
-}
-#pile{
-position:absolute;
-top:45%;
-left:50%;
-transform:translate(-50%,-50%);
-}
+
+#game{display:none;height:100vh;position:relative;}
+
+/* KART */
 .card{
-width:90px;
-height:140px;
-border-radius:20px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:28px;
-font-weight:bold;
-box-shadow:0 15px 25px rgba(0,0,0,.5);
-cursor:pointer;
-transition:transform .3s;
-color:white;
+width:90px;height:140px;border-radius:20px;
+display:flex;align-items:center;justify-content:center;
+font-size:26px;font-weight:bold;
+box-shadow:0 10px 20px rgba(0,0,0,.5);
+cursor:pointer;transition:.3s;color:white;
 }
-.card:hover{
-transform:translateY(-20px) scale(1.1);
-}
+.card:hover{transform:translateY(-20px) scale(1.1);}
+
 .red{background:#e63946;}
 .green{background:#2a9d8f;}
 .blue{background:#457b9d;}
 .yellow{background:#f4a261;color:black;}
 .black{background:black;}
+
 #playerHand{
-position:absolute;
-bottom:20px;
-width:100%;
-display:flex;
-justify-content:center;
-gap:8px;
-flex-wrap:nowrap;
+position:absolute;bottom:20px;width:100%;
+display:flex;justify-content:center;gap:8px;
 }
-#computerInfo{
-position:absolute;
-top:20px;
-width:100%;
-}
-#drawBtn{
-position:absolute;
-top:60%;
-left:50%;
+
+#computerInfo{position:absolute;top:20px;width:100%;}
+#pile{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);}
+#drawBtn{position:absolute;top:60%;left:50%;transform:translateX(-50%);}
+
+#unoBtn{
+position:absolute;bottom:180px;left:50%;
 transform:translateX(-50%);
-}
-#colorPicker{
+background:red;color:white;font-size:22px;
 display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.8);
-justify-content:center;
-align-items:center;
-gap:20px;
-z-index:20;
 }
-.colorBtn{
-width:80px;
-height:80px;
-border-radius:50%;
+
+button{
+padding:10px 20px;
+border-radius:10px;
+border:none;
 cursor:pointer;
+margin-top:15px;
+font-weight:bold;
 }
-.win{
-font-size:50px;
-animation:pop 1s ease infinite alternate;
-}
-@keyframes pop{
-from{transform:scale(1);}
-to{transform:scale(1.1);}
-}
+
+/* KONFETİ */
 .confetti{
-position:absolute;
-width:10px;
-height:10px;
+position:absolute;width:10px;height:10px;
 animation:fall linear forwards;
 }
 @keyframes fall{
 0%{transform:translateY(-10px) rotate(0);}
 100%{transform:translateY(100vh) rotate(720deg);}
 }
-#message{
-position:absolute;
-top:55%;
-width:100%;
-font-size:20px;
+
+/* EKRAN ÇATLAMA */
+#crackOverlay{
+position:fixed;
+inset:0;
+pointer-events:none;
+background-image:url("https://i.imgur.com/7QZ6FQK.png");
+background-size:cover;
+opacity:0;
+z-index:50;
+}
+
+@keyframes crackAnim{
+0%{opacity:0;transform:scale(1);}
+50%{opacity:1;transform:scale(1.05);}
+100%{opacity:1;transform:scale(1);}
+}
+
+.shake{
+animation:shake .4s;
+}
+@keyframes shake{
+0%{transform:translate(0,0);}
+20%{transform:translate(-10px,5px);}
+40%{transform:translate(10px,-5px);}
+60%{transform:translate(-8px,4px);}
+80%{transform:translate(8px,-4px);}
+100%{transform:translate(0,0);}
 }
 </style>
 </head>
 <body>
 
 <div id="startScreen">
-<svg class="unoLogo" viewBox="0 0 400 200">
-<ellipse cx="200" cy="100" rx="180" ry="80" fill="#d00000"/>
-<text x="200" y="125" font-size="100" text-anchor="middle" fill="white" font-weight="bold" transform="rotate(-10 200 100)">UNO</text>
-</svg>
-<h2>Cinarland Edition</h2>
+<h1>UNO Cinarland Edition</h1>
 <input id="username" placeholder="Kullanıcı Adın">
 <button onclick="startGame()">Başla</button>
 </div>
@@ -150,57 +119,64 @@ font-size:20px;
 <div id="game">
 <div id="computerInfo"></div>
 <div id="pile"></div>
-<div id="message"></div>
 <button id="drawBtn" onclick="draw()">Kart Çek</button>
+<button id="unoBtn" onclick="pressUNO()">UNO!</button>
 <div id="playerHand"></div>
 </div>
 
-<div id="colorPicker">
-<div class="colorBtn red" onclick="chooseColor('red')"></div>
-<div class="colorBtn green" onclick="chooseColor('green')"></div>
-<div class="colorBtn blue" onclick="chooseColor('blue')"></div>
-<div class="colorBtn yellow" onclick="chooseColor('yellow')"></div>
+<div id="endScreen" style="display:none;">
+<h1 id="endTitle"></h1>
+<button id="endBtn" onclick="location.reload()"></button>
 </div>
 
-<div id="endScreen" style="display:none;">
-<div id="endTitle" class="win"></div>
-<button onclick="restart()">Yeniden Başlat</button>
-</div>
+<div id="crackOverlay"></div>
 
 <script>
 const colors=["red","green","blue","yellow"];
 const specials=["+2","skip","reverse"];
-let deck=[],player=[],computer=[],current=null,turn=true,name="";
+let deck=[],player=[],computer=[],current=null;
+let turn=true,name="";
+let unoTimer=null,unoPressed=false;
 
+/* DESTE */
 function createDeck(){
 deck=[];
 colors.forEach(c=>{
 for(let i=0;i<=9;i++)deck.push({color:c,value:i});
 specials.forEach(s=>deck.push({color:c,value:s}));
 });
-for(let i=0;i<4;i++)deck.push({color:"black",value:"wild"});
+for(let i=0;i<4;i++){
+deck.push({color:"black",value:"wild"});
+deck.push({color:"black",value:"+4"});
+}
 deck.sort(()=>Math.random()-0.5);
 }
 
-function deal(){
-player=[];computer=[];
-for(let i=0;i<7;i++){
-player.push(deck.pop());
-computer.push(deck.pop());
+function safeDraw(){
+if(deck.length===0){
+createDeck();
+deck.sort(()=>Math.random()-0.5);
 }
+return deck.pop();
 }
 
+/* BAŞLAT */
 function startGame(){
 name=document.getElementById("username").value.trim();
 if(!name)return;
 document.getElementById("startScreen").style.display="none";
 document.getElementById("game").style.display="block";
 createDeck();
-deal();
-current=deck.pop();
+player=[];computer=[];
+for(let i=0;i<7;i++){
+player.push(safeDraw());
+computer.push(safeDraw());
+}
+current=safeDraw();
 render();
 }
 
+/* ÇİZ */
 function render(){
 document.getElementById("pile").innerHTML=
 `<div class="card ${current.color}">${current.value}</div>`;
@@ -230,43 +206,32 @@ let card=player[i];
 if(!valid(card))return;
 player.splice(i,1);
 applyCard(card,"player");
-check();
+checkUNO();
+checkWin();
 }
 
 function applyCard(card,who){
 current=card;
-showMessage(who==="player"?name+" oynadı: "+card.value:"Bilgisayar oynadı: "+card.value);
 
 if(card.value==="+2"){
 let target=who==="player"?computer:player;
-target.push(deck.pop());
-target.push(deck.pop());
+target.push(safeDraw());
+target.push(safeDraw());
 }
-if(card.value==="skip"){
-turn=!turn;
-}
-if(card.value==="reverse"){
-turn=!turn;
-}
-if(card.value==="wild"){
-if(who==="player"){
-document.getElementById("colorPicker").style.display="flex";
-return;
-}else{
+
+if(card.value==="+4"){
+let target=who==="player"?computer:player;
+for(let i=0;i<4;i++)target.push(safeDraw());
 current.color=colors[Math.floor(Math.random()*4)];
 }
+
+if(card.value==="wild"){
+current.color=colors[Math.floor(Math.random()*4)];
 }
+
 turn=!turn;
 render();
 if(!turn)setTimeout(bot,800);
-}
-
-function chooseColor(color){
-current.color=color;
-document.getElementById("colorPicker").style.display="none";
-turn=false;
-render();
-setTimeout(bot,800);
 }
 
 function bot(){
@@ -274,34 +239,66 @@ for(let i=0;i<computer.length;i++){
 if(valid(computer[i])){
 let card=computer.splice(i,1)[0];
 applyCard(card,"computer");
-check();
+checkWin();
 return;
 }
 }
-computer.push(deck.pop());
+computer.push(safeDraw());
 turn=true;
 render();
 }
 
 function draw(){
 if(!turn)return;
-player.push(deck.pop());
+player.push(safeDraw());
 render();
 }
 
-function check(){
+/* UNO SİSTEMİ */
+function checkUNO(){
+if(player.length===1){
+document.getElementById("unoBtn").style.display="block";
+unoPressed=false;
+clearTimeout(unoTimer);
+unoTimer=setTimeout(()=>{
+if(!unoPressed){
+for(let i=0;i<4;i++)player.push(safeDraw());
+render();
+}
+document.getElementById("unoBtn").style.display="none";
+},4000);
+}
+}
+
+function pressUNO(){
+unoPressed=true;
+document.getElementById("unoBtn").style.display="none";
+clearTimeout(unoTimer);
+}
+
+/* KAZANMA */
+function checkWin(){
 if(player.length===0)showEnd(true);
 if(computer.length===0)showEnd(false);
 }
 
 function showEnd(win){
+if(win){
+document.getElementById("endTitle").innerText=name+" EZDİ 😎";
+document.getElementById("endBtn").innerText="TEKRAR EZ";
+confetti();
+}else{
+document.body.classList.add("shake");
+let crack=document.getElementById("crackOverlay");
+crack.style.animation="crackAnim .6s forwards";
+document.getElementById("endTitle").innerText="Bilgisayar Kazandı 💀";
+document.getElementById("endBtn").innerText="İNTİKAM AL";
+}
 document.getElementById("game").style.display="none";
 document.getElementById("endScreen").style.display="flex";
-document.getElementById("endTitle").innerText=
-win?name+" KAZANDI! 🎉":"Bilgisayar Kazandı 😢";
-if(win)confetti();
 }
 
+/* KONFETİ */
 function confetti(){
 for(let i=0;i<120;i++){
 let c=document.createElement("div");
@@ -312,14 +309,6 @@ c.style.animationDuration=(2+Math.random()*2)+"s";
 document.body.appendChild(c);
 setTimeout(()=>c.remove(),4000);
 }
-}
-
-function restart(){
-location.reload();
-}
-
-function showMessage(msg){
-document.getElementById("message").innerText=msg;
 }
 </script>
 
