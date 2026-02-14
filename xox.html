@@ -3,213 +3,147 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cosmic XOX</title>
-
+<title>Cosmic XOX Tournament</title>
 <style>
 body{
 margin:0;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
 font-family:Arial;
-text-align:center;
-transition:0.4s;
-}
-
-/* Container */
-.container{
-margin-top:80px;
-display:inline-block;
-padding:25px;
-border-radius:15px;
-background:rgba(0,0,0,0.7);
-box-shadow:0 0 20px cyan;
+background:black;
 color:white;
+overflow:hidden;
 }
-
-/* Inputs */
-input{
-padding:8px;
-margin:5px;
-border-radius:6px;
-border:none;
+canvas{
+position:fixed;
+top:0;
+left:0;
+z-index:-1;
 }
-
-/* Board */
+.container{
+text-align:center;
+backdrop-filter:blur(15px);
+background:rgba(255,255,255,0.05);
+padding:25px;
+border-radius:20px;
+box-shadow:0 0 30px cyan;
+}
 .board{
 display:grid;
-grid-template-columns:repeat(3,80px);
-gap:6px;
-margin-top:15px;
-justify-content:center;
+grid-template-columns:repeat(3,100px);
+grid-template-rows:repeat(3,100px);
+gap:10px;
+margin:15px 0;
 }
-
 .cell{
-width:80px;
-height:80px;
-background:#222;
+background:rgba(255,255,255,0.05);
 display:flex;
-align-items:center;
 justify-content:center;
-font-size:35px;
+align-items:center;
+font-size:50px;
 cursor:pointer;
+border-radius:12px;
+transition:0.3s;
+}
+.cell:hover{
+transform:scale(1.1);
+box-shadow:0 0 20px cyan;
+}
+.x{color:#00f7ff;text-shadow:0 0 20px #00f7ff;}
+.o{color:#ff00c8;text-shadow:0 0 20px #ff00c8;}
+button,input{
+padding:8px;
 border-radius:8px;
-}
-
-.x{color:#00f7ff;}
-.o{color:#ff00c8;}
-
-button{
-padding:6px 10px;
 border:none;
-border-radius:6px;
-cursor:pointer;
-margin-top:8px;
+margin:5px;
 }
-
-#themeBtn{
-position:fixed;
-top:15px;
-right:15px;
-z-index:50;
-}
-
-/* Theme Panel */
-#themePanel{
-position:fixed;
-top:50px;
-right:15px;
-background:#111;
-padding:10px;
-border-radius:10px;
-display:none;
-flex-direction:column;
-gap:5px;
-z-index:50;
-}
-
-/* THEMES */
-body.neon{
-background:linear-gradient(45deg,#000,#001f2f);
-color:#00f7ff;
-}
-
-body.cyber{
-background:linear-gradient(45deg,#0f0c29,#302b63,#24243e);
-color:#ff00ff;
-}
-
-body.fire{
-background:linear-gradient(45deg,#200000,#660000,#ff0000);
-color:#ffcc00;
-}
-
-body.ice{
-background:linear-gradient(45deg,#001f2f,#003f5f,#00c6ff);
-color:#ffffff;
-}
-
-body.matrix{
-background:black;
-color:#00ff00;
-}
-
-/* Win Screen */
-#winScreen{
+.hidden{display:none;}
+.winScreen{
 position:fixed;
 top:0;
 left:0;
 width:100%;
 height:100%;
-background:black;
-display:none;
-flex-direction:column;
+background:linear-gradient(45deg,#000,#001f2f,#000);
+display:flex;
 justify-content:center;
 align-items:center;
-font-size:28px;
-color:white;
-z-index:100;
+flex-direction:column;
+font-size:40px;
+animation:fadeIn 1s;
+}
+.loseScreen{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#100000;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+font-size:35px;
+color:red;
+animation:fadeIn 1s;
+}
+@keyframes fadeIn{
+from{opacity:0;}
+to{opacity:1;}
+}
+.scoreBoard{
+font-size:18px;
+margin-bottom:10px;
 }
 </style>
 </head>
-
 <body>
 
-<button id="themeBtn">⚙️</button>
-
-<div id="themePanel">
-<button onclick="setTheme('neon')">Neon</button>
-<button onclick="setTheme('cyber')">Cyber</button>
-<button onclick="setTheme('fire')">Fire</button>
-<button onclick="setTheme('ice')">Ice</button>
-<button onclick="setTheme('matrix')">Matrix</button>
-</div>
+<canvas id="stars"></canvas>
 
 <div class="container" id="setup">
 <h2>Takım İsimleri</h2>
-<input id="name1" placeholder="Takım 1"><br>
-<input id="name2" placeholder="Takım 2"><br>
+<input id="name1" placeholder="Takım 1">
+<input id="name2" placeholder="Takım 2">
+<br>
 <button onclick="startGame()">Başla</button>
 </div>
 
-<div class="container" id="game" style="display:none;">
-<h3 id="turnText"></h3>
-<h4 id="scoreText"></h4>
-<div class="board" id="board"></div>
+<div class="container hidden" id="game">
+<h2 id="turnText"></h2>
+<div class="scoreBoard" id="scoreText"></div>
+<div class="board"></div>
+<button onclick="resetRound()">Yeni Tur</button>
 </div>
 
-<div id="winScreen"></div>
+<div id="winScreen" class="hidden"></div>
+<div id="loseScreen" class="hidden"></div>
 
 <script>
-let themeBtn=document.getElementById("themeBtn");
-let themePanel=document.getElementById("themePanel");
-
-let panelOpen=false;
-
-themeBtn.onclick=function(){
-if(panelOpen){
-themePanel.style.display="none";
-panelOpen=false;
-}else{
-themePanel.style.display="flex";
-panelOpen=true;
-}
-};
-
-function setTheme(theme){
-document.body.className="";
-document.body.classList.add(theme);
-localStorage.setItem("theme",theme);
-themePanel.style.display="none";
-panelOpen=false;
-}
-
-window.addEventListener("DOMContentLoaded",function(){
-let saved=localStorage.getItem("theme");
-if(saved){
-document.body.classList.add(saved);
-}else{
-document.body.classList.add("neon");
-}
-});
-
-let board=document.getElementById("board");
-let setup=document.getElementById("setup");
-let game=document.getElementById("game");
+let board=document.querySelector(".board");
 let turnText=document.getElementById("turnText");
 let scoreText=document.getElementById("scoreText");
+let setup=document.getElementById("setup");
+let game=document.getElementById("game");
 let winScreen=document.getElementById("winScreen");
+let loseScreen=document.getElementById("loseScreen");
 
 let player1,player2;
+let scores={X:0,O:0};
 let current="X";
 let state=["","","","","","","","",""];
-let scores={X:0,O:0};
 let active=true;
+let moveCount=0;
 
 const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
 function startGame(){
 player1=document.getElementById("name1").value||"Takım 1";
 player2=document.getElementById("name2").value||"Takım 2";
-setup.style.display="none";
-game.style.display="inline-block";
+setup.classList.add("hidden");
+game.classList.remove("hidden");
 createBoard();
 updateUI();
 }
@@ -218,30 +152,28 @@ function createBoard(){
 board.innerHTML="";
 for(let i=0;i<9;i++){
 let cell=document.createElement("div");
-cell.className="cell";
+cell.classList.add("cell");
 cell.dataset.i=i;
-cell.onclick=move;
+cell.onclick=handleMove;
 board.appendChild(cell);
 }
 }
 
-function move(e){
+function handleMove(e){
 let i=e.target.dataset.i;
 if(state[i]||!active)return;
-
 state[i]=current;
 e.target.textContent=current;
 e.target.classList.add(current.toLowerCase());
-
+moveCount++;
 if(checkWin())return;
-
 current=current==="X"?"O":"X";
 updateUI();
 }
 
 function updateUI(){
 turnText.textContent="Sıra: "+(current==="X"?player1:player2);
-scoreText.textContent=player1+" "+scores.X+" - "+scores.O+" "+player2;
+scoreText.textContent=player1+" ("+scores.X+") - "+player2+" ("+scores.O+")";
 }
 
 function checkWin(){
@@ -250,31 +182,74 @@ let[a,b,c]=w;
 if(state[a]&&state[a]===state[b]&&state[a]===state[c]){
 scores[current]++;
 if(scores[current]===3){
-endGame(current);
+endTournament(current);
 }else{
-reset();
+setTimeout(resetRound,1000);
 }
 return true;
 }
 }
+if(moveCount===9){
+setTimeout(resetRound,1000);
+return true;
+}
 return false;
 }
 
-function reset(){
+function resetRound(){
 state=["","","","","","","","",""];
+moveCount=0;
 current="X";
+active=true;
 createBoard();
 updateUI();
 }
 
-function endGame(winner){
+function endTournament(winner){
 active=false;
 let winnerName=winner==="X"?player1:player2;
-winScreen.style.display="flex";
-winScreen.innerHTML=
-"<h1>"+winnerName+" ŞAMPİYON 🚀</h1><button onclick='location.reload()'>Yeniden Başla</button>";
-}
-</script>
+let loserName=winner==="X"?player2:player1;
 
+winScreen.classList.remove("hidden");
+winScreen.className="winScreen";
+winScreen.innerHTML=winnerName+" ŞAMPİYON! 🚀<br><button onclick='showLose(\""+loserName+"\")'>Devam</button>";
+}
+
+function showLose(loser){
+winScreen.classList.add("hidden");
+loseScreen.classList.remove("hidden");
+loseScreen.className="loseScreen";
+loseScreen.innerHTML=loser+" Kaybetti... 💀<br><button onclick='location.reload()'>Yeniden Başla</button>";
+}
+
+const canvas=document.getElementById("stars");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+let mouse={x:canvas.width/2,y:canvas.height/2};
+window.addEventListener("mousemove",e=>{
+mouse.x=e.clientX;
+mouse.y=e.clientY;
+});
+let stars=[];
+for(let i=0;i<120;i++){
+stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2});
+}
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="white";
+for(let s of stars){
+let dx=mouse.x-s.x;
+let dy=mouse.y-s.y;
+s.x+=dx*0.002;
+s.y+=dy*0.002;
+ctx.beginPath();
+ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+ctx.fill();
+}
+requestAnimationFrame(draw);
+}
+draw();
+</script>
 </body>
 </html>
