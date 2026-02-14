@@ -2,302 +2,296 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cosmic XOX Ultimate</title>
+<title>Cosmic XOX</title>
 <style>
 body{
 margin:0;
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
 background:black;
-font-family:Arial;
 color:white;
+font-family:Orbitron, sans-serif;
 overflow:hidden;
-}
-canvas{
-position:fixed;
-top:0;
-left:0;
-}
-.container{
 text-align:center;
-backdrop-filter:blur(15px);
-background:rgba(255,255,255,0.05);
-padding:25px;
-border-radius:20px;
-box-shadow:0 0 30px cyan;
-z-index:2;
 }
-.board{
-display:grid;
-grid-template-columns:repeat(3,100px);
-grid-template-rows:repeat(3,100px);
-gap:10px;
-margin:15px 0;
-}
-.cell{
-background:rgba(255,255,255,0.05);
-display:flex;
-justify-content:center;
-align-items:center;
-font-size:50px;
-cursor:pointer;
-border-radius:12px;
-transition:0.3s;
-}
-.cell:hover{
-transform:scale(1.1);
-box-shadow:0 0 20px cyan;
-}
-.x{color:#00f7ff;text-shadow:0 0 20px #00f7ff;}
-.o{color:#ff00c8;text-shadow:0 0 20px #ff00c8;}
+
 .hidden{display:none;}
 
-#championScreen,#loseScreen{
-position:fixed;
-top:0;
-left:0;
+#nameScreen{
+position:absolute;
 width:100%;
-height:100%;
+height:100vh;
 display:flex;
+flex-direction:column;
 justify-content:center;
 align-items:center;
-flex-direction:column;
+gap:15px;
+background:black;
 z-index:5;
 }
 
-#championScreen{
-background:black;
+input{
+padding:10px;
+background:#111;
+border:1px solid cyan;
+color:white;
 }
 
-#loseScreen{
-background:#120000;
-color:red;
+button{
+padding:10px 20px;
+background:black;
+border:2px solid cyan;
+color:cyan;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+background:cyan;
+color:black;
+box-shadow:0 0 20px cyan;
+}
+
+#board{
+display:grid;
+grid-template-columns:repeat(3,120px);
+grid-template-rows:repeat(3,120px);
+gap:10px;
+justify-content:center;
+margin-top:120px;
+}
+
+.cell{
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:50px;
+background:#111;
+border:2px solid cyan;
+cursor:pointer;
+transition:0.3s;
+}
+
+.cell:hover{
+box-shadow:0 0 20px cyan;
+}
+
+#score{
+position:absolute;
+top:10px;
+width:100%;
+font-size:20px;
+}
+
+canvas{
+position:absolute;
+top:0;
+left:0;
+pointer-events:none;
+}
+
+#champion,#lose{
+position:absolute;
+width:100%;
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:black;
+z-index:10;
+}
+
+.trophy{
+font-size:80px;
+animation:spin 3s linear infinite;
+}
+
+@keyframes spin{
+0%{transform:rotateY(0deg);}
+100%{transform:rotateY(360deg);}
+}
+
+.glitch{
 animation:glitch 0.3s infinite;
 }
 
 @keyframes glitch{
 0%{transform:translate(2px,0);}
-25%{transform:translate(-2px,2px);}
-50%{transform:translate(2px,-2px);}
-75%{transform:translate(-2px,0);}
-100%{transform:translate(0);}
-}
-
-#trophy{
-width:150px;
-height:150px;
-background:linear-gradient(45deg,gold,orange,yellow);
-border-radius:20px 20px 40px 40px;
-margin:20px;
-animation:spin 4s linear infinite;
-box-shadow:0 0 40px gold;
-}
-@keyframes spin{
-from{transform:rotateY(0deg);}
-to{transform:rotateY(360deg);}
-}
-button{
-padding:10px 20px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-margin-top:15px;
+50%{transform:translate(-2px,0);}
+100%{transform:translate(2px,0);}
 }
 </style>
 </head>
 <body>
 
-<canvas id="bg"></canvas>
-<canvas id="effects"></canvas>
-
-<div class="container">
-<h2 id="turn"></h2>
-<div class="board"></div>
+<div id="nameScreen">
+<h1>Takım İsimleri</h1>
+<input id="p1" placeholder="Takım 1">
+<input id="p2" placeholder="Takım 2">
+<button onclick="startGame()">Başla</button>
 </div>
 
-<div id="championScreen" class="hidden">
-<h1 id="championText"></h1>
-<div id="trophy"></div>
-<button onclick="location.reload()">Yeniden Başla</button>
+<div id="score" class="hidden"></div>
+<div id="board" class="hidden"></div>
+
+<div id="champion" class="hidden">
+<h1 id="champText"></h1>
+<div class="trophy">🏆</div>
+<button onclick="restartGame()">Yeniden Başla</button>
 </div>
 
-<div id="loseScreen" class="hidden">
-<h1 id="loseText"></h1>
-<button onclick="location.reload()">Tekrar Dene</button>
+<div id="lose" class="hidden">
+<h1 id="loseText" class="glitch"></h1>
+<button onclick="restartGame()">Tekrar Dene</button>
 </div>
+
+<canvas id="stars"></canvas>
+<canvas id="fx"></canvas>
 
 <script>
-let board=document.querySelector(".board");
-let turnText=document.getElementById("turn");
-let championScreen=document.getElementById("championScreen");
-let loseScreen=document.getElementById("loseScreen");
-let championText=document.getElementById("championText");
-let loseText=document.getElementById("loseText");
+const boardDiv=document.getElementById("board");
+const scoreDiv=document.getElementById("score");
+const champ=document.getElementById("champion");
+const lose=document.getElementById("lose");
+const champText=document.getElementById("champText");
+const loseText=document.getElementById("loseText");
+const starsCanvas=document.getElementById("stars");
+const fxCanvas=document.getElementById("fx");
+const sctx=starsCanvas.getContext("2d");
+const fctx=fxCanvas.getContext("2d");
 
-let player1="Takım 1";
-let player2="Takım 2";
-let scores={X:0,O:0};
-let current="X";
+starsCanvas.width=fxCanvas.width=window.innerWidth;
+starsCanvas.height=fxCanvas.height=window.innerHeight;
+
+let players={X:"",O:""};
 let state=["","","","","","","","",""];
+let current="X";
+let active=false;
+let scores={X:0,O:0};
 let moveCount=0;
-let active=true;
 
-const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function startGame(){
+players.X=document.getElementById("p1").value||"Takım 1";
+players.O=document.getElementById("p2").value||"Takım 2";
+document.getElementById("nameScreen").classList.add("hidden");
+boardDiv.classList.remove("hidden");
+scoreDiv.classList.remove("hidden");
+active=true;
+createBoard();
+updateScore();
+}
 
 function createBoard(){
-board.innerHTML="";
-for(let i=0;i<9;i++){
-let cell=document.createElement("div");
-cell.classList.add("cell");
-cell.dataset.i=i;
-cell.onclick=handleMove;
-board.appendChild(cell);
-}
-updateUI();
-}
-
-function handleMove(e){
-let i=e.target.dataset.i;
-if(state[i]||!active)return;
-state[i]=current;
-e.target.textContent=current;
-e.target.classList.add(current.toLowerCase());
-moveCount++;
-if(checkWin())return;
-current=current==="X"?"O":"X";
-updateUI();
-}
-
-function updateUI(){
-turnText.textContent="Sıra: "+(current==="X"?player1:player2)+" | "+player1+"("+scores.X+") - "+player2+"("+scores.O+")";
-}
-
-function checkWin(){
-for(let w of wins){
-let[a,b,c]=w;
-if(state[a]&&state[a]===state[b]&&state[a]===state[c]){
-scores[current]++;
-if(scores[current]===3){
-finalSequence(current);
-}else{
-setTimeout(resetRound,800);
-}
-return true;
-}
-}
-if(moveCount===9){
-setTimeout(resetRound,800);
-return true;
-}
-return false;
-}
-
-function resetRound(){
+boardDiv.innerHTML="";
 state=["","","","","","","","",""];
 moveCount=0;
 current="X";
+for(let i=0;i<9;i++){
+const cell=document.createElement("div");
+cell.classList.add("cell");
+cell.onclick=()=>move(i,cell);
+boardDiv.appendChild(cell);
+}
+}
+
+function move(i,cell){
+if(!active||state[i])return;
+state[i]=current;
+cell.innerText=current;
+moveCount++;
+if(checkWin()){
+scores[current]++;
+updateScore();
+if(scores[current]>=3){
+finalSequence(current);
+}else{
 createBoard();
 }
-
+}else if(moveCount===9){
 createBoard();
-
-const bg=document.getElementById("bg");
-const bgCtx=bg.getContext("2d");
-bg.width=window.innerWidth;
-bg.height=window.innerHeight;
-
-let stars=[];
-for(let i=0;i<100;i++){
-stars.push({x:Math.random()*bg.width,y:Math.random()*bg.height,r:Math.random()*2});
+}else{
+current=current==="X"?"O":"X";
+}
 }
 
-function drawStars(){
-bgCtx.clearRect(0,0,bg.width,bg.height);
-bgCtx.fillStyle="white";
-for(let s of stars){
-bgCtx.beginPath();
-bgCtx.arc(s.x,s.y,s.r,0,Math.PI*2);
-bgCtx.fill();
+function checkWin(){
+const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+return wins.some(comb=>{
+if(comb.every(i=>state[i]===current)){
+galacticExplosion();
+return true;
 }
-requestAnimationFrame(drawStars);
-}
-drawStars();
-
-const fx=document.getElementById("effects");
-const fxCtx=fx.getContext("2d");
-fx.width=window.innerWidth;
-fx.height=window.innerHeight;
-
-let particles=[];
-
-function explosion(){
-particles=[];
-for(let i=0;i<300;i++){
-particles.push({
-x:fx.width/2,
-y:fx.height/2,
-angle:Math.random()*Math.PI*2,
-speed:Math.random()*6+2,
-life:100
 });
 }
-animateExplosion();
+
+function updateScore(){
+scoreDiv.innerText=`${players.X}: ${scores.X} | ${players.O}: ${scores.O}`;
 }
 
-function animateExplosion(){
-fxCtx.clearRect(0,0,fx.width,fx.height);
-for(let p of particles){
-p.x+=Math.cos(p.angle)*p.speed;
-p.y+=Math.sin(p.angle)*p.speed;
-p.life--;
-fxCtx.fillStyle="hsl("+Math.random()*360+",100%,60%)";
-fxCtx.beginPath();
-fxCtx.arc(p.x,p.y,3,0,Math.PI*2);
-fxCtx.fill();
+function galacticExplosion(){
+for(let i=0;i<50;i++){
+fctx.beginPath();
+fctx.arc(Math.random()*fxCanvas.width,Math.random()*fxCanvas.height,3,0,Math.PI*2);
+fctx.fillStyle="white";
+fctx.fill();
 }
-particles=particles.filter(p=>p.life>0);
-if(particles.length>0){
-requestAnimationFrame(animateExplosion);
-}
-}
-
-function blackHole(loser){
-let radius=0;
-function animate(){
-fxCtx.fillStyle="rgba(0,0,0,0.2)";
-fxCtx.fillRect(0,0,fx.width,fx.height);
-fxCtx.beginPath();
-fxCtx.arc(fx.width/2,fx.height/2,radius,0,Math.PI*2);
-let gradient=fxCtx.createRadialGradient(fx.width/2,fx.height/2,0,fx.width/2,fx.height/2,radius);
-gradient.addColorStop(0,"purple");
-gradient.addColorStop(1,"black");
-fxCtx.fillStyle=gradient;
-fxCtx.fill();
-radius+=3;
-if(radius<500){
-requestAnimationFrame(animate);
-}else{
-loseScreen.classList.remove("hidden");
-loseText.innerText=loser+" Evren Tarafından Yutuldu 💀";
-}
-}
-animate();
+setTimeout(()=>fctx.clearRect(0,0,fxCanvas.width,fxCanvas.height),500);
 }
 
 function finalSequence(winner){
 active=false;
-let winnerName=winner==="X"?player1:player2;
-let loserName=winner==="X"?player2:player1;
-explosion();
 setTimeout(()=>{
-blackHole(loserName);
-championScreen.classList.remove("hidden");
-championText.innerText=winnerName+" GALAKSİ ŞAMPİYONU 🚀";
+blackHoleEffect();
+},500);
+setTimeout(()=>{
+champ.classList.remove("hidden");
+champText.innerText="Galaksi Şampiyonu: "+players[winner];
 },2000);
 }
+
+function blackHoleEffect(){
+let radius=10;
+let interval=setInterval(()=>{
+fctx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+fctx.beginPath();
+fctx.arc(window.innerWidth/2,window.innerHeight/2,radius,0,Math.PI*2);
+fctx.fillStyle="purple";
+fctx.fill();
+radius+=10;
+if(radius>300)clearInterval(interval);
+},30);
+}
+
+function restartGame(){
+champ.classList.add("hidden");
+lose.classList.add("hidden");
+scores={X:0,O:0};
+active=true;
+createBoard();
+updateScore();
+}
+
+let stars=[];
+for(let i=0;i<100;i++){
+stars.push({x:Math.random()*starsCanvas.width,y:Math.random()*starsCanvas.height});
+}
+
+function animateStars(){
+sctx.clearRect(0,0,starsCanvas.width,starsCanvas.height);
+stars.forEach(star=>{
+sctx.fillStyle="white";
+sctx.fillRect(star.x,star.y,2,2);
+});
+requestAnimationFrame(animateStars);
+}
+animateStars();
+
+window.addEventListener("mousemove",e=>{
+stars.forEach(star=>{
+star.x+=(e.clientX-star.x)*0.0005;
+star.y+=(e.clientY-star.y)*0.0005;
+});
+});
 </script>
+
 </body>
 </html>
