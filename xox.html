@@ -19,12 +19,12 @@ margin-top:80px;
 display:inline-block;
 padding:25px;
 border-radius:15px;
-background:rgba(0,0,0,0.6);
+background:rgba(0,0,0,0.7);
 box-shadow:0 0 20px cyan;
 color:white;
 }
 
-/* Input */
+/* Inputs */
 input{
 padding:8px;
 margin:5px;
@@ -64,14 +64,11 @@ cursor:pointer;
 margin-top:8px;
 }
 
-.hidden{display:none;}
-
-/* Theme Button */
 #themeBtn{
 position:fixed;
 top:15px;
 right:15px;
-z-index:10;
+z-index:50;
 }
 
 /* Theme Panel */
@@ -82,9 +79,10 @@ right:15px;
 background:#111;
 padding:10px;
 border-radius:10px;
-display:flex;
+display:none;
 flex-direction:column;
 gap:5px;
+z-index:50;
 }
 
 /* THEMES */
@@ -121,12 +119,13 @@ left:0;
 width:100%;
 height:100%;
 background:black;
-display:flex;
+display:none;
 flex-direction:column;
 justify-content:center;
 align-items:center;
 font-size:28px;
 color:white;
+z-index:100;
 }
 </style>
 </head>
@@ -135,7 +134,7 @@ color:white;
 
 <button id="themeBtn">⚙️</button>
 
-<div id="themePanel" class="hidden">
+<div id="themePanel">
 <button onclick="setTheme('neon')">Neon</button>
 <button onclick="setTheme('cyber')">Cyber</button>
 <button onclick="setTheme('fire')">Fire</button>
@@ -150,37 +149,46 @@ color:white;
 <button onclick="startGame()">Başla</button>
 </div>
 
-<div class="container hidden" id="game">
+<div class="container" id="game" style="display:none;">
 <h3 id="turnText"></h3>
 <h4 id="scoreText"></h4>
 <div class="board" id="board"></div>
 </div>
 
-<div id="winScreen" class="hidden"></div>
+<div id="winScreen"></div>
 
 <script>
 let themeBtn=document.getElementById("themeBtn");
 let themePanel=document.getElementById("themePanel");
 
-themeBtn.onclick=()=>{
-themePanel.classList.toggle("hidden");
+let panelOpen=false;
+
+themeBtn.onclick=function(){
+if(panelOpen){
+themePanel.style.display="none";
+panelOpen=false;
+}else{
+themePanel.style.display="flex";
+panelOpen=true;
+}
 };
 
 function setTheme(theme){
-document.body.classList.remove("neon","cyber","fire","ice","matrix");
+document.body.className="";
 document.body.classList.add(theme);
 localStorage.setItem("theme",theme);
-themePanel.classList.add("hidden");
+themePanel.style.display="none";
+panelOpen=false;
 }
 
-window.onload=()=>{
+window.addEventListener("DOMContentLoaded",function(){
 let saved=localStorage.getItem("theme");
 if(saved){
 document.body.classList.add(saved);
 }else{
 document.body.classList.add("neon");
 }
-};
+});
 
 let board=document.getElementById("board");
 let setup=document.getElementById("setup");
@@ -200,8 +208,8 @@ const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function startGame(){
 player1=document.getElementById("name1").value||"Takım 1";
 player2=document.getElementById("name2").value||"Takım 2";
-setup.classList.add("hidden");
-game.classList.remove("hidden");
+setup.style.display="none";
+game.style.display="inline-block";
 createBoard();
 updateUI();
 }
@@ -219,13 +227,13 @@ board.appendChild(cell);
 
 function move(e){
 let i=e.target.dataset.i;
-if(state[i]||!active) return;
+if(state[i]||!active)return;
 
 state[i]=current;
 e.target.textContent=current;
 e.target.classList.add(current.toLowerCase());
 
-if(checkWin()) return;
+if(checkWin())return;
 
 current=current==="X"?"O":"X";
 updateUI();
@@ -262,7 +270,7 @@ updateUI();
 function endGame(winner){
 active=false;
 let winnerName=winner==="X"?player1:player2;
-winScreen.classList.remove("hidden");
+winScreen.style.display="flex";
 winScreen.innerHTML=
 "<h1>"+winnerName+" ŞAMPİYON 🚀</h1><button onclick='location.reload()'>Yeniden Başla</button>";
 }
