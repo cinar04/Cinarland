@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cosmic XOX Tournament</title>
+<title>Cosmic XOX Ultimate</title>
 <style>
 body{
 margin:0;
@@ -11,8 +11,8 @@ height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-font-family:Arial;
 background:black;
+font-family:Arial;
 color:white;
 overflow:hidden;
 }
@@ -20,7 +20,6 @@ canvas{
 position:fixed;
 top:0;
 left:0;
-z-index:-1;
 }
 .container{
 text-align:center;
@@ -29,6 +28,7 @@ background:rgba(255,255,255,0.05);
 padding:25px;
 border-radius:20px;
 box-shadow:0 0 30px cyan;
+z-index:2;
 }
 .board{
 display:grid;
@@ -53,100 +53,99 @@ box-shadow:0 0 20px cyan;
 }
 .x{color:#00f7ff;text-shadow:0 0 20px #00f7ff;}
 .o{color:#ff00c8;text-shadow:0 0 20px #ff00c8;}
-button,input{
-padding:8px;
-border-radius:8px;
-border:none;
-margin:5px;
-}
 .hidden{display:none;}
-.winScreen{
+
+#championScreen,#loseScreen{
 position:fixed;
 top:0;
 left:0;
 width:100%;
 height:100%;
-background:linear-gradient(45deg,#000,#001f2f,#000);
 display:flex;
 justify-content:center;
 align-items:center;
 flex-direction:column;
-font-size:40px;
-animation:fadeIn 1s;
+z-index:5;
 }
-.loseScreen{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#100000;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-font-size:35px;
+
+#championScreen{
+background:black;
+}
+
+#loseScreen{
+background:#120000;
 color:red;
-animation:fadeIn 1s;
+animation:glitch 0.3s infinite;
 }
-@keyframes fadeIn{
-from{opacity:0;}
-to{opacity:1;}
+
+@keyframes glitch{
+0%{transform:translate(2px,0);}
+25%{transform:translate(-2px,2px);}
+50%{transform:translate(2px,-2px);}
+75%{transform:translate(-2px,0);}
+100%{transform:translate(0);}
 }
-.scoreBoard{
-font-size:18px;
-margin-bottom:10px;
+
+#trophy{
+width:150px;
+height:150px;
+background:linear-gradient(45deg,gold,orange,yellow);
+border-radius:20px 20px 40px 40px;
+margin:20px;
+animation:spin 4s linear infinite;
+box-shadow:0 0 40px gold;
+}
+@keyframes spin{
+from{transform:rotateY(0deg);}
+to{transform:rotateY(360deg);}
+}
+button{
+padding:10px 20px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:15px;
 }
 </style>
 </head>
 <body>
 
-<canvas id="stars"></canvas>
+<canvas id="bg"></canvas>
+<canvas id="effects"></canvas>
 
-<div class="container" id="setup">
-<h2>Takım İsimleri</h2>
-<input id="name1" placeholder="Takım 1">
-<input id="name2" placeholder="Takım 2">
-<br>
-<button onclick="startGame()">Başla</button>
-</div>
-
-<div class="container hidden" id="game">
-<h2 id="turnText"></h2>
-<div class="scoreBoard" id="scoreText"></div>
+<div class="container">
+<h2 id="turn"></h2>
 <div class="board"></div>
-<button onclick="resetRound()">Yeni Tur</button>
 </div>
 
-<div id="winScreen" class="hidden"></div>
-<div id="loseScreen" class="hidden"></div>
+<div id="championScreen" class="hidden">
+<h1 id="championText"></h1>
+<div id="trophy"></div>
+<button onclick="location.reload()">Yeniden Başla</button>
+</div>
+
+<div id="loseScreen" class="hidden">
+<h1 id="loseText"></h1>
+<button onclick="location.reload()">Tekrar Dene</button>
+</div>
 
 <script>
 let board=document.querySelector(".board");
-let turnText=document.getElementById("turnText");
-let scoreText=document.getElementById("scoreText");
-let setup=document.getElementById("setup");
-let game=document.getElementById("game");
-let winScreen=document.getElementById("winScreen");
+let turnText=document.getElementById("turn");
+let championScreen=document.getElementById("championScreen");
 let loseScreen=document.getElementById("loseScreen");
+let championText=document.getElementById("championText");
+let loseText=document.getElementById("loseText");
 
-let player1,player2;
+let player1="Takım 1";
+let player2="Takım 2";
 let scores={X:0,O:0};
 let current="X";
 let state=["","","","","","","","",""];
-let active=true;
 let moveCount=0;
+let active=true;
 
 const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-
-function startGame(){
-player1=document.getElementById("name1").value||"Takım 1";
-player2=document.getElementById("name2").value||"Takım 2";
-setup.classList.add("hidden");
-game.classList.remove("hidden");
-createBoard();
-updateUI();
-}
 
 function createBoard(){
 board.innerHTML="";
@@ -157,6 +156,7 @@ cell.dataset.i=i;
 cell.onclick=handleMove;
 board.appendChild(cell);
 }
+updateUI();
 }
 
 function handleMove(e){
@@ -172,8 +172,7 @@ updateUI();
 }
 
 function updateUI(){
-turnText.textContent="Sıra: "+(current==="X"?player1:player2);
-scoreText.textContent=player1+" ("+scores.X+") - "+player2+" ("+scores.O+")";
+turnText.textContent="Sıra: "+(current==="X"?player1:player2)+" | "+player1+"("+scores.X+") - "+player2+"("+scores.O+")";
 }
 
 function checkWin(){
@@ -182,15 +181,15 @@ let[a,b,c]=w;
 if(state[a]&&state[a]===state[b]&&state[a]===state[c]){
 scores[current]++;
 if(scores[current]===3){
-endTournament(current);
+finalSequence(current);
 }else{
-setTimeout(resetRound,1000);
+setTimeout(resetRound,800);
 }
 return true;
 }
 }
 if(moveCount===9){
-setTimeout(resetRound,1000);
+setTimeout(resetRound,800);
 return true;
 }
 return false;
@@ -200,56 +199,105 @@ function resetRound(){
 state=["","","","","","","","",""];
 moveCount=0;
 current="X";
-active=true;
 createBoard();
-updateUI();
 }
 
-function endTournament(winner){
+createBoard();
+
+const bg=document.getElementById("bg");
+const bgCtx=bg.getContext("2d");
+bg.width=window.innerWidth;
+bg.height=window.innerHeight;
+
+let stars=[];
+for(let i=0;i<100;i++){
+stars.push({x:Math.random()*bg.width,y:Math.random()*bg.height,r:Math.random()*2});
+}
+
+function drawStars(){
+bgCtx.clearRect(0,0,bg.width,bg.height);
+bgCtx.fillStyle="white";
+for(let s of stars){
+bgCtx.beginPath();
+bgCtx.arc(s.x,s.y,s.r,0,Math.PI*2);
+bgCtx.fill();
+}
+requestAnimationFrame(drawStars);
+}
+drawStars();
+
+const fx=document.getElementById("effects");
+const fxCtx=fx.getContext("2d");
+fx.width=window.innerWidth;
+fx.height=window.innerHeight;
+
+let particles=[];
+
+function explosion(){
+particles=[];
+for(let i=0;i<300;i++){
+particles.push({
+x:fx.width/2,
+y:fx.height/2,
+angle:Math.random()*Math.PI*2,
+speed:Math.random()*6+2,
+life:100
+});
+}
+animateExplosion();
+}
+
+function animateExplosion(){
+fxCtx.clearRect(0,0,fx.width,fx.height);
+for(let p of particles){
+p.x+=Math.cos(p.angle)*p.speed;
+p.y+=Math.sin(p.angle)*p.speed;
+p.life--;
+fxCtx.fillStyle="hsl("+Math.random()*360+",100%,60%)";
+fxCtx.beginPath();
+fxCtx.arc(p.x,p.y,3,0,Math.PI*2);
+fxCtx.fill();
+}
+particles=particles.filter(p=>p.life>0);
+if(particles.length>0){
+requestAnimationFrame(animateExplosion);
+}
+}
+
+function blackHole(loser){
+let radius=0;
+function animate(){
+fxCtx.fillStyle="rgba(0,0,0,0.2)";
+fxCtx.fillRect(0,0,fx.width,fx.height);
+fxCtx.beginPath();
+fxCtx.arc(fx.width/2,fx.height/2,radius,0,Math.PI*2);
+let gradient=fxCtx.createRadialGradient(fx.width/2,fx.height/2,0,fx.width/2,fx.height/2,radius);
+gradient.addColorStop(0,"purple");
+gradient.addColorStop(1,"black");
+fxCtx.fillStyle=gradient;
+fxCtx.fill();
+radius+=3;
+if(radius<500){
+requestAnimationFrame(animate);
+}else{
+loseScreen.classList.remove("hidden");
+loseText.innerText=loser+" Evren Tarafından Yutuldu 💀";
+}
+}
+animate();
+}
+
+function finalSequence(winner){
 active=false;
 let winnerName=winner==="X"?player1:player2;
 let loserName=winner==="X"?player2:player1;
-
-winScreen.classList.remove("hidden");
-winScreen.className="winScreen";
-winScreen.innerHTML=winnerName+" ŞAMPİYON! 🚀<br><button onclick='showLose(\""+loserName+"\")'>Devam</button>";
+explosion();
+setTimeout(()=>{
+blackHole(loserName);
+championScreen.classList.remove("hidden");
+championText.innerText=winnerName+" GALAKSİ ŞAMPİYONU 🚀";
+},2000);
 }
-
-function showLose(loser){
-winScreen.classList.add("hidden");
-loseScreen.classList.remove("hidden");
-loseScreen.className="loseScreen";
-loseScreen.innerHTML=loser+" Kaybetti... 💀<br><button onclick='location.reload()'>Yeniden Başla</button>";
-}
-
-const canvas=document.getElementById("stars");
-const ctx=canvas.getContext("2d");
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
-let mouse={x:canvas.width/2,y:canvas.height/2};
-window.addEventListener("mousemove",e=>{
-mouse.x=e.clientX;
-mouse.y=e.clientY;
-});
-let stars=[];
-for(let i=0;i<120;i++){
-stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2});
-}
-function draw(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-ctx.fillStyle="white";
-for(let s of stars){
-let dx=mouse.x-s.x;
-let dy=mouse.y-s.y;
-s.x+=dx*0.002;
-s.y+=dy*0.002;
-ctx.beginPath();
-ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-ctx.fill();
-}
-requestAnimationFrame(draw);
-}
-draw();
 </script>
 </body>
 </html>
